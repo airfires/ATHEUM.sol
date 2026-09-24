@@ -1,77 +1,27 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+# AŦHEUM Mainnet Deployer
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
-import {ERC20Pausable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+A browser-wallet deployment console for the upgradeable AŦHEUM token on Ethereum Mainnet.
 
-contract ATHEUM is ERC20, ERC20Burnable, ERC20Capped, ERC20Pausable, ERC20Permit, Ownable2Step {
-    uint256 private constant INITIAL_SUPPLY = 999_999_999_999_999_999 * 10 ** 18;
-    uint256 private constant MAX_SUPPLY = 1_000_000_000_000_000_000 * 10 ** 18;
-    uint256 public constant MAX_FEE_BPS = 300;
-    uint256 private _feeBps;
-    address private _feeRecipient;
+## Token behavior
 
-    event Mint(address indexed to, uint256 amount);
-    event FeeUpdated(uint256 oldFeeBps, uint256 newFeeBps);
-    event FeeRecipientUpdated(address indexed oldRecipient, address indexed newRecipient);
+- Name: `AŦHEUM`
+- Ticker: `AŦH`
+- Fixed supply of `999,999,999,999,999,999 AŦH`, minted once to `0x624953da93414ddA6A137898bA36A4EdF2f952C3`
+- 10% transfer fee, initially paid to that recipient (the fee-recipient wallet is exempt when sending)
+- No public or owner minting function
+- Pausable transfers and burn support
+- EIP-2612 permit support
+- UUPS upgrades authorized by the two-step owner
 
-    error ZeroAddress();
-    error FeeTooHigh(uint256 provided, uint256 max);
-    error ExceedsMaxSupply(uint256 requested, uint256 remaining);
+## Local development
 
-    constructor(address initialOwner)
-        ERC20(unicode"AŦHEUM", unicode"AŦH")
-        ERC20Capped(MAX_SUPPLY)
-        ERC20Permit(unicode"AŦHEUM")
-        Ownable(initialOwner)
-    {
-        _mint(initialOwner, INITIAL_SUPPLY);
-        _feeRecipient = initialOwner;
-        _feeBps = 0;
-    }
+```bash
+npm install
+npm run dev
+```
 
-    function feeBps() external view returns (uint256) { return _feeBps; }
-    function feeRecipient() external view returns (address) { return _feeRecipient; }
-    function maxSupply() external pure returns (uint256) { return MAX_SUPPLY; }
-    function remainingMintableSupply() external view returns (uint256) { return cap() - totalSupply(); }
+`npm run build` compiles the contracts before building the static deployment console. The deployment page only accepts Ethereum Mainnet (chain ID 1) and requires two wallet transactions: the implementation followed by the initialized proxy. It only permits `0x624953da93414ddA6A137898bA36A4EdF2f952C3` to deploy, making that wallet the on-chain creator, owner, supply recipient, and initial fee recipient. The proxy address shown at completion is the canonical token address.
 
-    function mint(address to, uint256 amount) external onlyOwner whenNotPaused {
-        if (to == address(0)) revert ZeroAddress();
-        _mint(to, amount);
-        emit Mint(to, amount);
-    }
+The console includes `0x45895179ef934fc08e5e3cc43b70cb32bbd6e3f2` as an existing-token reference. A new deployment does not reuse that address: Ethereum generates a new implementation address and a new canonical proxy address, which the console links on Etherscan after confirmation.
 
-    function pause() external onlyOwner { _pause(); }
-    function unpause() external onlyOwner { _unpause(); }
-
-    function setFeeBps(uint256 newFeeBps) external onlyOwner {
-        if (newFeeBps > MAX_FEE_BPS) revert FeeTooHigh(newFeeBps, MAX_FEE_BPS);
-        emit FeeUpdated(_feeBps, newFeeBps);
-        _feeBps = newFeeBps;
-    }
-
-    function setFeeRecipient(address newRecipient) external onlyOwner {
-        if (newRecipient == address(0)) revert ZeroAddress();
-        emit FeeRecipientUpdated(_feeRecipient, newRecipient);
-        _feeRecipient = newRecipient;
-    }
-
-    function _update(address from, address to, uint256 value)
-        internal
-        override(ERC20, ERC20Capped, ERC20Pausable)
-    {
-        if (from != address(0) && to != address(0) && _feeBps > 0) {
-            uint256 fee = (value * _feeBps) / 10_000;
-            uint256 net = value - fee;
-            super._update(from, _feeRecipient, fee);
-            super._update(from, to, net);
-        } else {
-            super._update(from, to, value);
-        }
-    }
-}
+Review and independently audit the contracts before deploying production funds. Never enter a seed phrase or private key into this site.
