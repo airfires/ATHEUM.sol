@@ -4,6 +4,8 @@ A browser-wallet deployment console for the upgradeable AŦHEUM token on Ethereu
 
 ## Token behavior
 
+- Name: `AŦHEUM`
+- Ticker: `AŦH`
 - Fixed supply of `999,999,999,999,999,999 AŦH`, minted once to `0x624953da93414ddA6A137898bA36A4EdF2f952C3`
 - 10% transfer fee, initially paid to that recipient (the fee-recipient wallet is exempt when sending)
 - No public or owner minting function
