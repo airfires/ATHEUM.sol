@@ -28,7 +28,12 @@ button.addEventListener("click", async () => {
       await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] });
       if ((await provider.getNetwork()).chainId !== MAINNET) throw new Error("Ethereum Mainnet is required.");
     }
-    const signer = await provider.getSigner(); mark("wallet");
+    const signer = await provider.getSigner();
+    const deployer = await signer.getAddress();
+    if (deployer.toLowerCase() !== TOKEN_OWNER.toLowerCase()) {
+      throw new Error(`Connect the designated creator wallet ${TOKEN_OWNER}.`);
+    }
+    mark("wallet");
     setStatus("Confirm implementation deployment in your wallet…");
     const implementation = await new ContractFactory(tokenArtifact.abi, tokenArtifact.bytecode, signer).deploy();
     setStatus("Waiting for implementation confirmation…"); await implementation.waitForDeployment(); mark("implementation");

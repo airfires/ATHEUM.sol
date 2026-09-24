@@ -18,6 +18,6 @@ npm install
 npm run dev
 ```
 
-`npm run build` compiles the contracts before building the static deployment console. The deployment page only accepts Ethereum Mainnet (chain ID 1) and requires two wallet transactions: the implementation followed by the initialized proxy. The connected wallet signs and pays gas; the designated recipient becomes the owner and receives the supply. The proxy address shown at completion is the canonical token address.
+`npm run build` compiles the contracts before building the static deployment console. The deployment page only accepts Ethereum Mainnet (chain ID 1) and requires two wallet transactions: the implementation followed by the initialized proxy. It only permits `0x624953da93414ddA6A137898bA36A4EdF2f952C3` to deploy, making that wallet the on-chain creator, owner, supply recipient, and initial fee recipient. The proxy address shown at completion is the canonical token address.
 
 Review and independently audit the contracts before deploying production funds. Never enter a seed phrase or private key into this site.
